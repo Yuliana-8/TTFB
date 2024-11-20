@@ -2,10 +2,6 @@
 #
 # Shows time in seconds to first byte of a url or urls
 #
-# Based on a gist https://gist.github.com/sandeepraju/1f5fbdbdd89551ba7925abe2645f92b5
-# by https://github.com/sandeepraju
-#
-# Modified by jay@gooby.org, @jaygooby
 #
 # Usage: ttfb [options] url [url...]
 #   -d debug
