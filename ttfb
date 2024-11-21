@@ -1,60 +1,29 @@
 #!/usr/bin/env bash
-#
-# Shows time in seconds to first byte of a url or urls
-#
-#
-# Usage: ttfb [options] url [url...]
-#   -d debug
-#   -l <log file> (infers -d) log response headers. Defaults to ./curl.log
-#   -n <number> of times to test time to first byte
-#   -o <option> pass options to curl (e.g. -o "-k" will make curl ignore invalid certificates)
-#   -v verbose output. Show request breakdown during -n calls
-#
-# Examples:
-#
-# ttfb https://example.com/example/url
-# .098974
-#
-# ttfb -n 5 https://example.com/
-# .....
-# fastest .099195 slowest .103138 median .099684
-#
-# ttfb -n 5 bbc.co.uk news.bbc.co.uk
-# .....
-# .....
-# bbc.co.uk       fastest .045873 slowest .046870 median .045999
-# news.bbc.co.uk  fastest .042286 slowest .060245 median .046035
-#
-# ttfb bbc.co.uk news.bbc.co.uk
-# bbc.co.uk        .048378
-# news.bbc.co.uk   .049303
-#
-# Implicitly follows redirects using curl's -L option.
-#
-# Log all response headers (default log file is ./curl.log) by calling with -d
-#
-# Override the default log file by specifying -l /some/file
-#
-# Get min, max and median values by specifying the number of times to call
-# the URL; use -n2 for 2 tests, -n5 for 5 and so on.
-#
-# If you specify more than one url and have specified -d or -l, the log file
-# will be prefixed with the URL being requested.
-#
-# If you specify -n and -d or -l, the response headers from the consecutive
-# requests will be concatenated in the log file.
-#
-# See https://blog.cloudflare.com/a-question-of-timing/
-# and https://curl.haxx.se/docs/manpage.html for an explanation
-# of how the curl variables relate to the various stages of
-# the transfer.
-#
-# To get a better approximation of devtool's TTFB, consider
-# the time without the connection overhead:
-# %{time_starttransfer} - %{time_appconnect}
-#
-# Uses a dirty eval to do the ttfb arithmetic. Depends
-# on bc and column commands.
+
+# Function to generate JUnit XML report
+generate_junit_report() {
+  local url=$1
+  local fastest=$2
+  local slowest=$3
+  local median=$4
+  local result=$5
+  local report_file=$6
+
+  cat <<EOF > "$report_file"
+<testsuite name="ttfb" tests="1" failures="0" errors="0" skipped="0">
+  <testcase classname="ttfb" name="$url">
+    <system-out>
+      <![CDATA[
+      Fastest: $fastest
+      Slowest: $slowest
+      Median: $median
+      Result: $result
+      ]]>
+    </system-out>
+  </testcase>
+</testsuite>
+EOF
+}
 
 calculate_median() {
   local values=("$@")
@@ -104,20 +73,6 @@ fi
 # check curl can use http2
 HTTP_VERSION="--http2"
 curl -so /dev/null --http2 https://example.com || HTTP_VERSION="--http1.1"
-
-# Cribbed from https://stackoverflow.com/a/41762669/391826
-median() {
-  arr=($(printf '%s\n' "${@}" | sort -n))
-  nel=${#arr[@]}
-  if (( $nel % 2 == 1 )); then     # Odd number of elements
-    val="${arr[ $(($nel/2)) ]}"
-  else                            # Even number of elements
-    (( j=nel/2 ))
-    (( k=j-1 ))
-    val=$(echo "scale=6;(${arr[j]}" + "${arr[k]})"/2|bc -l)
-  fi
-  echo $val
-}
 
 show_usage() {
   echo -e "Usage: ttfb [options] url [url...]\n\t-d debug\n\t-l <log file> (infers -d) log response headers. Defaults to ./curl.log\n\t-n <number> of times to test time to first byte\n\t-o <option> pass options to curl (e.g. -o \"-k\" will make curl ignore invalid certificates)\n\t-v verbose output. Show response breakdown (DNS lookup, TLS handshake etc)" >&2
@@ -239,9 +194,15 @@ for URL in $URLS; do
     # sort the times
     ttfbs=( $( printf "%s\n" "${ttfbs[@]}" | sort -n ) )
     # show quickest, slowest and median fftb
+    fastest=${ttfbs[0]}
+    slowest=${ttfbs[${#ttfbs[*]}-1]}
     median_ttfb=$(calculate_median "${ttfbs[@]}")
     result=$(categorize_median "$median_ttfb")
-    printf "${SHOW_URL}\e[32mfastest \e[39m${ttfbs[0]} \e[91mslowest \e[39m${ttfbs[${#ttfbs[*]}-1]} \e[95mmedian \e[39m$median_ttfb \e[39mresult \e[39m$result\n";
+    printf "${SHOW_URL}\e[32mfastest \e[39m$fastest \e[91mslowest \e[39m$slowest \e[95mmedian \e[39m$median_ttfb \e[39mresult \e[39m$result\n";
+
+    # Generate JUnit report
+    report_file="ttfb_report.xml"
+    generate_junit_report "$URL" "$fastest" "$slowest" "$median_ttfb" "$result" "$report_file"
   else
    if [ $VERBOSE -eq 1 ]; then
      echo -e $SHOW_URL $(eval $(curl "${options[@]}" "$URL"))
