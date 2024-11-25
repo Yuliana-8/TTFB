@@ -1,7 +1,7 @@
 # Installation
 Download the script from the master branch and make it executable:
 ```
-curl -LJO https://raw.githubusercontent.com/jaygooby/ttfb.sh/master/ttfb
+curl -LJO https://raw.githubusercontent.com/
 chmod +x ./ttfb
 ```
 
@@ -35,7 +35,7 @@ DNS lookup: 0.005152 TLS handshake: 0.000000 TTFB including connection: 0.200831
 Test multiple times:
 
 ```
-$ ttfb -n 5 example.com/example/url
+$ ttfb -n 5 https://example.com
 .....
 fastest .177263 slowest .214302 median .179957
 ```
@@ -43,25 +43,25 @@ fastest .177263 slowest .214302 median .179957
 Test multiple URLs:
 
 ```
-$ ttfb bbc.co.uk news.bbc.co.uk
-bbc.co.uk        .049985
-news.bbc.co.uk   .054122
+$ ttfb https://example1.com https://example2.com
+example1.com       .049985
+example2.com       .054122
 ```
 
 Test multiple URLs, multiple times:
 
 ```
-$ ttfb -n 5 bbc.co.uk news.bbc.co.uk
+$ ttfb -n 5 https://example1.com https://example2.com
 .....
 .....
-bbc.co.uk       fastest .030936 slowest .057755 median .034663
-news.bbc.co.uk  fastest .031413 slowest .182791 median .035001
+example1.com       fastest .030936 slowest .057755 median .034663
+example2.com       fastest .031413 slowest .182791 median .035001
 ```
 
 Verbose response breakdown when multiple tests specified:
 
 ```
-$ ttfb -v -n 5 bbc.co.uk
+$ ttfb -v -n 5 https://example.com
 DNS lookup: 0.005335 TLS handshake: 0.102314 TTFB including connection: 0.148328 TTFB: .046014 Total time: 0.646115
 DNS lookup: 0.005322 TLS handshake: 0.102609 TTFB including connection: 0.150693 TTFB: .048084 Total time: 0.644611
 DNS lookup: 0.004277 TLS handshake: 0.102066 TTFB including connection: 0.172199 TTFB: .070133 Total time: 1.196256
