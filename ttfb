@@ -198,7 +198,8 @@ for URL in $URLS; do
     slowest=${ttfbs[${#ttfbs[*]}-1]}
     median_ttfb=$(calculate_median "${ttfbs[@]}")
     result=$(categorize_median "$median_ttfb")
-    printf "${SHOW_URL}\e[32mfastest \e[39m$fastest \e[91mslowest \e[39m$slowest \e[95mmedian \e[39m$median_ttfb \e[39mresult \e[39m$result\n";
+    printf "%q" ${SHOW_URL}
+    printf "\e[32mfastest \e[39m$fastest \e[91mslowest \e[39m$slowest \e[95mmedian \e[39m$median_ttfb \e[39mresult \e[39m$result\n";
 
     # Generate JUnit report
     report_file="ttfb_report.xml"
